@@ -52,7 +52,7 @@ describe('Aggregation', function () {
         emptyArr: []
       }
     ];
-    //also create the copy
+    // Also create the copy
     dataCopy = JSON.parse(JSON.stringify(dataset));
   });
   describe('Error condition', function () {
