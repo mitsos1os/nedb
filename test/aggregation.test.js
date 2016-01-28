@@ -63,7 +63,7 @@ describe('Aggregation', function () {
       aggregation.exec(dataset, [op], function (err, docs) {
         should.not.exist(docs);
         err.should.be.instanceof(Error);
-        err.should.have.property('message', 'Unknown aggregation operator $bla used.')
+        err.should.have.property('message', 'Unknown aggregation operator $bla used.');
         done();
       });
     });
@@ -367,56 +367,134 @@ describe('Aggregation', function () {
       });
     });
 
-    it('should work correctly when _id provided to filter docs', function (done) {
-      var op = {$group: {_id: '$username', count: {$sum: 1}}};
-      aggregation.exec(dataset, [op], function (err, results) {
-        should.not.exist(err);
-        results.should.have.length(2);
-        results.should.deep.have.members([
-          {
-            _id: 'Mitsos',
-            count: 1
-          },
-          {
-            _id: 'Kate',
-            count: 1
-          }
-        ]);
-        done();
-      });
-    });
-
-    it('should work correctly when _id provided to filter docs and different operator value', function (done) {
-      var op = {$group: {_id: '$username', count: {$sum: 2}}};
-      aggregation.exec(dataset, [op], function (err, results) {
-        should.not.exist(err);
-        results.should.have.length(2);
-        results.should.deep.have.members([
-          {
-            _id: 'Mitsos',
-            count: 2
-          },
-          {
-            _id: 'Kate',
-            count: 2
-          }
-        ]);
-        done();
-      });
-    });
-
-    it('should work correctly when null _id provided to compute all docs', function (done) {
-      var op = {$group: {_id: null, count: {$sum: 2}}};
-      aggregation.exec(dataset, [op], function (err, results) {
-        should.not.exist(err);
-        results.should.have.length(1);
-        results[0].should.deep.equal({
-          _id: null,
-          count: 4
+    describe('$sum accumulator', function () {
+      it('should work correctly when _id provided to filter docs', function (done) {
+        var op = {$group: {_id: '$username', count: {$sum: 1}}};
+        aggregation.exec(dataset, [op], function (err, results) {
+          should.not.exist(err);
+          results.should.have.length(2);
+          results.should.deep.have.members([
+            {
+              _id: 'Mitsos',
+              count: 1
+            },
+            {
+              _id: 'Kate',
+              count: 1
+            }
+          ]);
+          done();
         });
-        done();
       });
+
+      it('should work correctly when _id provided to filter docs and different operator value', function (done) {
+        var op = {$group: {_id: '$username', count: {$sum: 2}}};
+        aggregation.exec(dataset, [op], function (err, results) {
+          should.not.exist(err);
+          results.should.have.length(2);
+          results.should.deep.have.members([
+            {
+              _id: 'Mitsos',
+              count: 2
+            },
+            {
+              _id: 'Kate',
+              count: 2
+            }
+          ]);
+          done();
+        });
+      });
+
+      it('should work correctly when null _id provided to compute all docs', function (done) {
+        var op = {$group: {_id: null, count: {$sum: 2}}};
+        aggregation.exec(dataset, [op], function (err, results) {
+          should.not.exist(err);
+          results.should.have.length(1);
+          results[0].should.deep.equal({
+            _id: null,
+            count: 4
+          });
+          done();
+        });
+      });
+
     });
+
+    describe('$push accumulator', function () {
+
+      it('Should correctly be used on literal values to push', function (done) {
+        var op = {$group: {_id: null, foo: {$push: 10}}};
+        aggregation.exec(dataset, [op], function (err, results) {
+          should.not.exist(err);
+          results.should.have.length(1);
+          results[0].should.deep.equal({
+            _id: null,
+            foo:[10,10]
+          });
+          done();
+        });
+      });
+
+      it('Should correctly be used on doc field Paths to push', function (done) {
+        var op = {$group: {_id: null, users: {$push: '$username'}}};
+        aggregation.exec(dataset, [op], function (err, results) {
+          should.not.exist(err);
+          results.should.have.length(1);
+          results[0].should.deep.equal({
+            _id: null,
+            users:['Mitsos', 'Kate']
+          });
+          done();
+        });
+      });
+
+      it('Should correctly be used on doc field Paths to push for new objects', function (done) {
+        var op = {$group: {_id: null, users: {$push: {userGenders:'$gender'}}}};
+        aggregation.exec(dataset, [op], function (err, results) {
+          should.not.exist(err);
+          results.should.have.length(1);
+          results[0].should.deep.equal({
+            _id: null,
+            users:[{userGenders:'male'}, {userGenders:'female'}]
+          });
+          done();
+        });
+      });
+
+      it('Should correctly skip non existent properties and only provide exiting ones', function (done) {
+        var op = {$group: {_id: null, foo: {$push: '$subdoc.tika'}}};
+        aggregation.exec(dataset, [op], function (err, results) {
+          should.not.exist(err);
+          results.should.have.length(1);
+          results[0].should.deep.equal({
+            _id: null,
+            foo:['taka']
+          });
+          done();
+        });
+      });
+
+      it('Should throw error when numeric value provided in $push expression', function (done) {
+        var op = {$group: {_id: null, foo: {$push: {some:1}}}};
+        aggregation.exec(dataset, [op], function (err, results) {
+          should.not.exist(results);
+          err.should.be.instanceof(Error);
+          done();
+        });
+      });
+
+      it('Should throw error when boolean value provided in $push expression', function (done) {
+        var op = {$group: {_id: null, foo: {$push: {some:true}}}};
+        aggregation.exec(dataset, [op], function (err, results) {
+          should.not.exist(results);
+          err.should.be.instanceof(Error);
+          done();
+        });
+      });
+
+    });
+
   });
 
   describe('$project', function () {
