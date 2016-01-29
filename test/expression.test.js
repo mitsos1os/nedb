@@ -55,11 +55,36 @@ describe('expression', function () {
   });
 
   it('Should allow expression object that has boolean / numeric when in $project stage', function () {
-    var isProjectStage = true;
-    (function(){expression.apply({foo:false}, null, isProjectStage)}).should.not.throw(/not allowed/);
-    expression.apply({foo:false}, null, isProjectStage).should.deep.equal({foo:false});
-    (function(){expression.apply({foo:5}, null, isProjectStage)}).should.not.throw(/not allowed/);
-    expression.apply({foo:5}, null, isProjectStage).should.deep.equal({foo:5});
+    var isProjectStage = true
+      , expr = {addresses:{home:1}}
+      ;
+    (function(){expression.apply(expr, sourceDoc, isProjectStage)}).should.not.throw(/not allowed/);
+  });
+
+  it('Should correctly apply projection when boolean / numeric value and in $project stage', function () {
+    var isProjectStage = true
+      , expr = {addresses:{home:1}}
+      ;
+    expression.apply(expr, sourceDoc, isProjectStage).should.deep.equal({addresses:{
+      home:{
+        number:56,
+        address:'somewhere'
+      }
+    }});
+  });
+
+  it('Should correctly apply projection on array when boolean / numeric value and in $project stage', function () {
+    var isProjectStage = true
+      , expr = {elems:{poso:1}}
+      ;
+    expression.apply(expr, sourceDoc, isProjectStage).should.deep.equal({elems:[{poso:'akoma'},{poso:'ligo'}]});
+  });
+
+  it('Should correctly compute expression with a mix of projection and fieldPaths in $project stage', function () {
+    var isProjectStage = true
+      , expr = {whatIsNum:'$num', elems:{poso:1}}
+      ;
+    expression.apply(expr, sourceDoc, isProjectStage).should.deep.equal({whatIsNum:4, elems:[{poso:'akoma'},{poso:'ligo'}]});
   });
 
 });

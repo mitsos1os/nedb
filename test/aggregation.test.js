@@ -538,7 +538,7 @@ describe('Aggregation', function () {
       });
     });
 
-    it('should correctly include only existing fields (embedded documents) along with _id, exluding field if not exists', function (done) {
+    it('should correctly include only existing fields (embedded documents) along with _id, excluding field if not exists', function (done) {
       var op = {$project: {username: 1, 'subdoc.tika': 1}};
       aggregation.exec(dataset, [op], function (err, docs) {
         should.not.exist(err);
